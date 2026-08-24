@@ -1,0 +1,334 @@
+{
+  "name": "Hydroponic Critical Alert & Local AI Advisor",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes"
+            }
+          ]
+        }
+      },
+      "id": "d04321c8-bf99-49a0-8757-9259247fcf97",
+      "name": "Schedule Every 5 Mins",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -608,
+        432
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://charging-station-f1f46-default-rtdb.asia-southeast1.firebasedatabase.app/hydroponics/latest.json",
+        "options": {}
+      },
+      "id": "40486121-e0c1-4ba6-b91b-fa66d682d6a7",
+      "name": "Fetch Firebase Sensor Data",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -400,
+        432
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "check_status",
+              "leftValue": "={{ $json.prediction }}",
+              "rightValue": "Critical",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "b1eee4f7-4215-40ce-af3f-b84f3a2fb1c5",
+      "name": "Is Prediction Critical?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -176,
+        432
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://192.168.0.103:11434/api/generate",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"llama3.2:1b\",\n  \"prompt\": \"The hydroponic system status is CRITICAL. Live parameters: pH={{ $('Fetch Firebase Sensor Data').item.json.ph }}, TDS={{ $('Fetch Firebase Sensor Data').item.json.tds }} ppm, EC={{ $('Fetch Firebase Sensor Data').item.json.ec }} mS/cm, Water Temp={{ $('Fetch Firebase Sensor Data').item.json.water_temp }}°C, Humidity={{ $('Fetch Firebase Sensor Data').item.json.humidity }}%. Give 2-3 short, actionable bullet points explaining how the farmer should fix this immediately.\",\n  \"stream\": false,\n  \"options\": {\n    \"num_predict\": 100\n  }\n}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "d20b33f3-6384-4d3e-ad97-62fe5b429110",
+      "name": "Ask Local Ollama AI",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        48,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.telegram.org/bot8541990632:AAG4b_1pNfUwxbB_aNaEIBaxnFGUJv3tosQ/sendMessage",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chat_id",
+              "value": "722705868"
+            },
+            {
+              "name": "text",
+              "value": "=={{ \"HYDROPONIC CRITICAL ALERT\\n\\nLive Sensor Values:\\n----------------------------\\npH: \" + $('Fetch Firebase Sensor Data').item.json.ph + \"\\nTDS: \" + $('Fetch Firebase Sensor Data').item.json.tds + \" ppm\\nEC: \" + $('Fetch Firebase Sensor Data').item.json.ec + \" mS/cm\\nWater Temp: \" + $('Fetch Firebase Sensor Data').item.json.water_temp + \" C\\nWater Level: \" + $('Fetch Firebase Sensor Data').item.json.water_level + \" cm\\nFlow Rate: \" + $('Fetch Firebase Sensor Data').item.json.flow_rate + \" L/min\\nAir Temp: \" + $('Fetch Firebase Sensor Data').item.json.air_temp + \" C\\nHumidity: \" + $('Fetch Firebase Sensor Data').item.json.humidity + \" %\\nLight: \" + $('Fetch Firebase Sensor Data').item.json.lux + \" Lux\\nCO2: \" + $('Fetch Firebase Sensor Data').item.json.co2_ppm + \" ppm\\n\\nAI Corrective Advice (llama3.2:1b):\\n----------------------------\\n\" + $json.response }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "7f8fd013-f95c-4464-bce8-6fc290ca09eb",
+      "name": "Send Telegram Message",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        272,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes"
+            }
+          ]
+        }
+      },
+      "id": "4b3d5284-b917-40b0-9a90-e2c4409d8647",
+      "name": "Schedule Every 5 Mins1",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -656,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://charging-station-f1f46-default-rtdb.asia-southeast1.firebasedatabase.app/hydroponics/latest.json",
+        "options": {}
+      },
+      "id": "90703108-ed0b-4ecf-8de7-08865f118abb",
+      "name": "Fetch Firebase Sensor Data1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -448,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "check_status",
+              "leftValue": "={{ $json.prediction }}",
+              "rightValue": "Critical",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "ac45ebd6-64a2-4f6a-93d8-b893549f1d74",
+      "name": "Is Prediction Critical?1",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -224,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://192.168.0.103:11434/api/generate",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"llama3.2:1b\",\n  \"prompt\": \"The hydroponic system status is CRITICAL. Live parameters: pH={{ $('Fetch Firebase Sensor Data1').item.json.ph }}, TDS={{ $('Fetch Firebase Sensor Data1').item.json.tds }} ppm, EC={{ $('Fetch Firebase Sensor Data1').item.json.ec }} mS/cm, Water Temp={{ $('Fetch Firebase Sensor Data1').item.json.water_temp }}°C, Humidity={{ $('Fetch Firebase Sensor Data1').item.json.humidity }}%. Give 2-3 short, actionable bullet points explaining how the farmer should fix this immediately.\",\n  \"stream\": false,\n  \"options\": {\n    \"num_predict\": 100\n  }\n}",
+        "options": {
+          "timeout": 600000
+        }
+      },
+      "id": "eeecb2f3-629f-4e7f-8d94-bffe25a9f866",
+      "name": "Ask Local Ollama AI1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.telegram.org/bot8541990632:AAG4b_1pNfUwxbB_aNaEIBaxnFGUJv3tosQ/sendMessage",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chat_id",
+              "value": "1269473943"
+            },
+            {
+              "name": "text",
+              "value": "=={{ \"HYDROPONIC CRITICAL ALERT\\n\\nLive Sensor Values:\\n----------------------------\\npH: \" + $('Fetch Firebase Sensor Data1').item.json.ph + \"\\nTDS: \" + $('Fetch Firebase Sensor Data1').item.json.tds + \" ppm\\nEC: \" + $('Fetch Firebase Sensor Data1').item.json.ec + \" mS/cm\\nWater Temp: \" + $('Fetch Firebase Sensor Data1').item.json.water_temp + \" C\\nWater Level: \" + $('Fetch Firebase Sensor Data1').item.json.water_level + \" cm\\nFlow Rate: \" + $('Fetch Firebase Sensor Data1').item.json.flow_rate + \" L/min\\nAir Temp: \" + $('Fetch Firebase Sensor Data1').item.json.air_temp + \" C\\nHumidity: \" + $('Fetch Firebase Sensor Data1').item.json.humidity + \" %\\nLight: \" + $('Fetch Firebase Sensor Data1').item.json.lux + \" Lux\\nCO2: \" + $('Fetch Firebase Sensor Data1').item.json.co2_ppm + \" ppm\\n\\nAI Corrective Advice (llama3.2:1b):\\n----------------------------\\n\" + $json.response }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "cc40887b-214a-4610-82c0-0b5bfdf58def",
+      "name": "Send Telegram Message1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        224,
+        0
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Every 5 Mins": {
+      "main": [
+        [
+          {
+            "node": "Fetch Firebase Sensor Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Firebase Sensor Data": {
+      "main": [
+        [
+          {
+            "node": "Is Prediction Critical?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Prediction Critical?": {
+      "main": [
+        [
+          {
+            "node": "Ask Local Ollama AI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ask Local Ollama AI": {
+      "main": [
+        [
+          {
+            "node": "Send Telegram Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Every 5 Mins1": {
+      "main": [
+        [
+          {
+            "node": "Fetch Firebase Sensor Data1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Firebase Sensor Data1": {
+      "main": [
+        [
+          {
+            "node": "Is Prediction Critical?1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Prediction Critical?1": {
+      "main": [
+        [
+          {
+            "node": "Ask Local Ollama AI1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ask Local Ollama AI1": {
+      "main": [
+        [
+          {
+            "node": "Send Telegram Message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "b12c07d1-8159-405a-b823-bebe652911bf",
+  "meta": {
+    "instanceId": "be8a6c43814e17a1a1501db423a26a87605f74abd0b20f8d1443711e6905998e"
+  },
+  "id": "TRRuJA2atFQsdHCW",
+  "tags": []
+}
